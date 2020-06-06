@@ -7,22 +7,43 @@
 //
 
 import SwiftUI
+import CoreImage
+import CoreImage.CIFilterBuiltins
 
 struct ContentView: View {
     @State private var image : Image?
-    //@State private var backgroundColor = Color.white
     
     var body: some View {
         VStack {
             image?
-            .resizable()
-            .scaledToFit()
+                .resizable()
+                .scaledToFit()
         }
         .onAppear(perform: loadImage)
     }
     
     func loadImage() {
-        image = Image("ookla")
+        guard let inputImage = UIImage(named: "ookla") else {
+            return
+        }
+        
+        let beginImage = CIImage(image: inputImage)
+        
+        let context = CIContext()
+        let currentFilter = CIFilter.sepiaTone()
+        currentFilter.inputImage = beginImage
+        currentFilter.intensity = 1
+        
+        // returns CIImage
+        guard let outputImage = currentFilter.outputImage else {
+            return
+        }
+        
+        if let cgimg = context.createCGImage(outputImage, from: outputImage.extent) {
+            let uiimage = UIImage(cgImage: cgimg)
+            
+            image = Image(uiImage: uiimage)
+        }
     }
 }
 
