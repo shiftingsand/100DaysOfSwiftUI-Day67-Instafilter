@@ -18,6 +18,8 @@ struct ContentView: View {
     @State private var showingImagePicker = false
     @State private var currentFilter : CIFilter = CIFilter.sepiaTone()
     @State private var showingFilterSheet = false
+    @State private var showSaveErrorAlert = false
+    
     let context = CIContext()
     
     var body: some View {
@@ -64,7 +66,10 @@ struct ContentView: View {
                     Spacer()
                     
                     Button("Save") {
-                        guard let processedImage = self.processedImage else {return}
+                        guard let processedImage = self.processedImage else {
+                            self.showSaveErrorAlert = true
+                            return
+                        }
                         let imageSaver = ImageSaver()
                         
                         imageSaver.successHandler = {
@@ -76,6 +81,9 @@ struct ContentView: View {
                         }
                         
                         imageSaver.writeToPhotoAlbum(image: processedImage)
+                    }
+                    .alert(isPresented: $showSaveErrorAlert) {
+                        Alert(title: Text("Hold up!"), message: Text("You can't save because you haven't selected an image yet!"), dismissButton: .default(Text("OK")))
                     }
                 }
             } // vstack
