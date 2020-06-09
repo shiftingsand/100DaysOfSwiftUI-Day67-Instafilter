@@ -13,6 +13,7 @@ import CoreImage.CIFilterBuiltins
 struct ContentView: View {
     @State private var image : Image?
     @State private var inputImage: UIImage?
+    @State private var processedImage: UIImage?
     @State private var filterIntensity = 0.5
     @State private var showingImagePicker = false
     @State private var currentFilter : CIFilter = CIFilter.sepiaTone()
@@ -63,7 +64,18 @@ struct ContentView: View {
                     Spacer()
                     
                     Button("Save") {
+                        guard let processedImage = self.processedImage else {return}
+                        let imageSaver = ImageSaver()
                         
+                        imageSaver.successHandler = {
+                            print("Success!")
+                        }
+                        
+                        imageSaver.errorHandler = { messy in
+                            print("Ooops: \(messy.localizedDescription)")
+                        }
+                        
+                        imageSaver.writeToPhotoAlbum(image: processedImage)
                     }
                 }
             } // vstack
@@ -100,6 +112,7 @@ struct ContentView: View {
         if let cgimg = context.createCGImage(outputImage, from: outputImage.extent) {
             let uiImage = UIImage(cgImage: cgimg)
             image = Image(uiImage: uiImage)
+            processedImage = uiImage
         }
     }
     
