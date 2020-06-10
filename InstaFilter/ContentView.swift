@@ -10,18 +10,43 @@ import SwiftUI
 import CoreImage
 import CoreImage.CIFilterBuiltins
 
+enum SliderTypes {
+    case intensityOnly
+    case radiusOnly
+    case scaleOnly
+    case intensityRadius
+}
+
+let edgesName = "Edges"
+let gbName = "Gaussian Blur"
+let pixellateName = "Pixellate"
+let stName = "Sepia Tone"
+let umName = "Unsharp Mask"
+let vignetteName = "Vignette"
+
 struct ContentView: View {
+    let sliderDict : [ String : SliderTypes ] = [ edgesName : .intensityOnly, gbName : .radiusOnly, pixellateName : .scaleOnly, stName : .intensityOnly, umName : .intensityRadius, vignetteName : .intensityRadius ]
     @State private var image : Image?
     @State private var inputImage: UIImage?
     @State private var processedImage: UIImage?
     @State private var filterIntensity = 0.5
+    @State private var filterRadius = 0.5
+    @State private var filterScale = 0.5
     @State private var showingImagePicker = false
     @State private var currentFilter : CIFilter = CIFilter.sepiaTone()
     @State private var showingFilterSheet = false
     @State private var showSaveErrorAlert = false
-    @State private var filterName = "Sepia Tone"
+    @State private var filterName = stName
     
     let context = CIContext()
+    
+    var returnSliderTypes : SliderTypes {
+        if let mySlider = sliderDict[filterName] {
+            return mySlider
+        } else {
+            return .intensityOnly
+        }
+    }
     
     var body: some View {
         let intensity = Binding<Double> (
@@ -30,6 +55,24 @@ struct ContentView: View {
         },
             set: { nummy in
                 self.filterIntensity = nummy
+                self.applyProcessing()
+        }
+        )
+        let radius = Binding<Double> (
+            get: {
+                self.filterRadius
+        },
+            set: { nummy in
+                self.filterRadius = nummy
+                self.applyProcessing()
+        }
+        )
+        let scale = Binding<Double> (
+            get: {
+                self.filterScale
+        },
+            set: { nummy in
+                self.filterScale = nummy
                 self.applyProcessing()
         }
         )
@@ -54,10 +97,31 @@ struct ContentView: View {
                     self.showingImagePicker = true
                 }
                 
-                HStack {
-                    Text("Intensity")
-                    Slider(value: intensity)
-                }.padding(.vertical)
+                if returnSliderTypes == SliderTypes.intensityOnly ||
+                    returnSliderTypes == SliderTypes.intensityRadius {
+                    HStack {
+                        Text("Intensity")
+                        Slider(value: intensity)
+                        
+                    }.padding(.vertical)
+                }
+                
+                if returnSliderTypes == SliderTypes.radiusOnly ||
+                    returnSliderTypes == SliderTypes.intensityRadius {
+                    HStack {
+                        Text("Radius")
+                        Slider(value: radius)
+                        
+                    }.padding(.vertical)
+                }
+                
+                if returnSliderTypes == SliderTypes.scaleOnly {
+                    HStack {
+                        Text("Scale")
+                        Slider(value: scale)
+                        
+                    }.padding(.vertical)
+                }
                 
                 HStack {
                     Button("\(filterName)") {
@@ -95,26 +159,26 @@ struct ContentView: View {
             }
             .actionSheet(isPresented: self.$showingFilterSheet) {
                 ActionSheet(title: Text("Select a filter"), buttons: [
-                    .default(Text("Crystallize")) {
-                        self.filterName = "Crystallize"
-                        self.setFilter(CIFilter.crystallize()) },
-                    .default(Text("Edges")) {
-                        self.filterName = "Edges"
+//                    .default(Text("Crystallize")) {
+//                        self.filterName = "Crystallize"
+//                        self.setFilter(CIFilter.crystallize()) },
+                    .default(Text(edgesName)) {
+                        self.filterName = edgesName
                         self.setFilter(CIFilter.edges()) },
-                    .default(Text("Gaussian Blur")) {
-                        self.filterName = "Gaussian Blur"
+                    .default(Text(gbName)) {
+                        self.filterName = gbName
                         self.setFilter(CIFilter.gaussianBlur()) },
-                    .default(Text("Pixellate")) {
-                        self.filterName = "Pixellate"
+                    .default(Text(pixellateName)) {
+                        self.filterName = pixellateName
                         self.setFilter(CIFilter.pixellate()) },
-                    .default(Text("Sepia Tone")) {
-                        self.filterName = "Sepia Tone"
+                    .default(Text(stName)) {
+                        self.filterName = stName
                         self.setFilter(CIFilter.sepiaTone()) },
-                    .default(Text("Unsharp Mask")) {
-                        self.filterName = "Unsharp Mask"
+                    .default(Text(umName)) {
+                        self.filterName = umName
                         self.setFilter(CIFilter.unsharpMask()) },
-                    .default(Text("Vignette")) {
-                        self.filterName = "Vignette"
+                    .default(Text(vignetteName)) {
+                        self.filterName = vignetteName
                         self.setFilter(CIFilter.vignette()) },
                     .cancel()
                 ])
@@ -127,8 +191,8 @@ struct ContentView: View {
         //currentFilter.setValue(filterIntensity, forKey: kCIInputIntensityKey)
         let inputKeys = currentFilter.inputKeys
         if inputKeys.contains(kCIInputIntensityKey) { currentFilter.setValue(filterIntensity, forKey: kCIInputIntensityKey) }
-        if inputKeys.contains(kCIInputRadiusKey) { currentFilter.setValue(filterIntensity * 200, forKey: kCIInputRadiusKey) }
-        if inputKeys.contains(kCIInputScaleKey) { currentFilter.setValue(filterIntensity * 10, forKey: kCIInputScaleKey) }
+        if inputKeys.contains(kCIInputRadiusKey) { currentFilter.setValue(filterRadius * 200, forKey: kCIInputRadiusKey) }
+        if inputKeys.contains(kCIInputScaleKey) { currentFilter.setValue(filterScale * 10, forKey: kCIInputScaleKey) }
         
         guard let outputImage = currentFilter.outputImage else { return }
         
