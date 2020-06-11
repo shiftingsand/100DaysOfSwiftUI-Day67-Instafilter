@@ -99,6 +99,9 @@ struct ContentView: View {
         }
     }
     
+    
+    hello child
+    
     func applyProcessing() {
         //currentFilter.intensity = Float(filterIntensity)
         //currentFilter.setValue(filterIntensity, forKey: kCIInputIntensityKey)
